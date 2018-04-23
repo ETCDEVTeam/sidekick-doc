@@ -1,4 +1,4 @@
-# Exploring MVP Sidechaining on ETC
+# Exploring MVP Sidechains on ETC
 
 ### Introducing sidechains
 
@@ -25,6 +25,19 @@ _Cons:_
 
 
 Addressing `Con#1` is where the whole networks-talking-to-each-other thing comes in. If it's too expensive/slow/annoying to use mainnet for every transaction... let's just use it for _some_ transactions. If the sidechain can once in a while tell mainnet: "Hey, here's an update about what our network looks like now," then it'll have a secure and permanent record of what the state of affairs _should look like_ on the sidechain at a given point. This is called a _checkpoint_ pattern.
+
+
+Now here's where a critical piece of the design comes in.
+
+If the sidenet were _only to POST data_ to the mainnet (and never depend on querying that data again), there would indeed be a secure record of the sidechain history... but there's nothing to ensure that the sidechain history itself has integrity. The mainnet derives consistency by requiring sequential congruence; the value of block B depends on the value of block A, and everyone's got to agree (or at least not rebut) that those pieces do actually fit. Chain progression is derived from sequential consensus.
+
+So without checking (and depending on) the checkpoint data stored on mainnet, the sidenet is missing out on the security of the consensus mechanisms of the mainnet. If it doesn't depend on mainnet, then it doesn't get any of the value of putting anything on mainnet in the first place. I repeat myself. That part is important.
+
+
+For further reference, let's call a pattern where sidenet does _POST only_ to mainnet a __unilateral__ communication mechanism, and the pattern with _POST and QUERY_ a __bilateral__ mechanism.
+
+### Building a ~~dumbest possible~~ minimum-viable sidechain
+
 
 
 
