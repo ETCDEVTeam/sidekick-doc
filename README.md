@@ -26,9 +26,11 @@ Addressing `Con#1` is where the whole networks-talking-to-each-other thing comes
 
 #### Data flows
 
-If the sidenet were _only to POST data_ to the mainnet (and never depend on querying that data again), there would indeed be a secure record of the sidechain history... but there's nothing to ensure that the sidechain history itself has integrity. The mainnet derives consistency by requiring sequential congruence; the value of block B depends on the value of block A, and everyone's got to agree (or at least not rebut) that those pieces do actually fit. Chain progression is derived from sequential consensus.
+If the sidenet were _only to POST data_ to the mainnet, and never depend on querying that data again, there would indeed be a secure _record_ of the sidechain history... but there's nothing to ensure that the sidechain history as it progresses -- the record itself, as it were -- actually has integrity. 
 
-So without checking (and depending on) the checkpoint data stored on mainnet, the sidenet is missing out on the security of the consensus mechanisms of the mainnet. If it doesn't depend on mainnet, then it doesn't get any of the value of putting anything on mainnet in the first place. I repeat myself. That part is important.
+The mainnet's integrity is a function of necessitating sequential congruence; the value of block B depends on the value of block A, and everyone's got to agree (or at least not rebut) that the given pieces do actually fit together. Chain progression and integrity is derived from sequential consensus.
+
+So without checking -- and relying on -- the checkpoint data stored on mainnet, the sidenet is missing out on the security of the consensus mechanisms of the mainnet. If it doesn't depend data from the mainnet, then it doesn't get any of the value of putting data on mainnet in the first place. I repeat myself. That part is important.
 
 For further reference, let's call a pattern where sidenet does _POST only_ to mainnet a __unilateral__ communication mechanism, and the pattern with _POST and QUERY_ a __bilateral__ mechanism.
 
@@ -41,7 +43,7 @@ For further reference, let's call a pattern where sidenet does _POST only_ to ma
 - Because changes to client code are bulky. Code must be written, refactored, rewritten, reviewed, heckled, rebased, merged, tagged, releases released. Clients have to be updated, documentation written, tests tested, bugs fixed... and so forth. Eventually the best solution(s) _will_ involve significant and diverse changes to the client(s), but for now we're still in the "what does this even mean" phase, and a minimum-viable proof-of-concept should be runnable by anybody _now_... if possible. 
 - And finally, because it's fun to see how we could bend already-existing stuff to make it do new weird stuff.
 
-#### Requirements
+#### Conceptual requirements
 
 There are a few key challenges in developing a sidechain-ready client.
 
@@ -53,6 +55,16 @@ __Checkpoints__. Tying together points `1` and `2`, implementing checkpoints wil
 
 > Aside: IMO it's really dumb that they're called smart contracts. They're not smart and they're not really contracts. They're just programs.
 
+#### Things we'll build
+
+1. A Proof of Authority mechanism to solve the `Consensus` requirement.
+2. A mechanism to enable chain-to-chain communication.
+3. A mechanism to create and validate checkpoints on the sidechain.
+4. Smart contracts for mainnet and sidenet to store and delegate checkpoint fingerprints and fingerprint validation.
+
+> TODO: Write these smart contracts. The PoC is far stronger with viable contracts to make data handling exemplary and explicit.
+
+Please note that in some aspects these projects are interdependent. For example, the checkpoint mechanism will be interdependent with the consensus mechanism, since both require and facilitate block validation. And chain-to-chain communication will be dependent on the the timing and logistics of the checkpointing scheme, so those will need to integrate smoothly as well.
 
 ### Getting started
 
@@ -84,7 +96,7 @@ One of the most significant limitations of geth's console and it's primary facil
 
 There are a few approaches to solutions around this limitation, like "oracles" and even a few distributed protocols that hope to integrate the two worlds in a trustable/trustless way, and in the future might be an interesting avenue of further exploration as far as chain integrations.
 
-However, instead of 
+For the time being we're going to use an as-simple-as-possible external application (or script? program?) to handle 
 
 
 
