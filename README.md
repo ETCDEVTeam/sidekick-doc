@@ -1,4 +1,4 @@
-# What sidechains mean to me
+# Exploring MVP Sidechaining on ETC
 
 ### Introducing sidechains
 
