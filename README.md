@@ -229,7 +229,7 @@ while read -r line; do
 
 Using `curl` and an assumed [emerald-cli](https://github.com/ETCDEVTeam/emerald-cli), the script facilitates posting transactions to designated smart contract address on both the mainnet and reciprocally to the sidechain.
 
-The important thing -- and as-is, kind of awkwardly written -- is that the script not only acts on an event coming from the sidenet client, but also that it's able to listen or monitor for a corresponding "status update" from mainnet. This is implemented here, albeit awkwardly, as
+The important thing is that the script not only acts on an event coming from the sidenet client, but also that it's able to listen or monitor for a corresponding "status update" from mainnet. This is implemented here, albeit awkwardly, as
 
 ```shell
 while [ $rpc_call_attempts -lt 10 ]; do
@@ -247,13 +247,30 @@ while [ $rpc_call_attempts -lt 10 ]; do
 done
 ```
 
+#### Smart contracts
+
+One important facet of this schema that I haven't gone into (yet?) are the smart contracts. Here's what they'll need to do.
+
+On mainnet:
+
+- Accept data `d` from a transaction created only by a whitelisted address.
+- Store data `d` and return, say, `sha3(d1,d2)`. We want the return value to be confirmable (reproducible) outside of the contract.
+- Probably limit the amount is `d`s that can be stored.
+
+On sidenet:
+
+- Pretty much the same as on mainnet.
+
 
 #### PoA consensus in adhoc javascript
 
+The core idea of [ETCDEVTeam/tx2poa](https://github.com/ETCDEVTeam/sidekick-tx2poa) is for designated "Authority" nodes to use "incomplete proof of authority transactions" to assert their _authorship_ of the blocks they mine by broadcasting their participation in the round along with a piece of a signed hash that together with data provided in a candidate winning next block can be used by any node to verify that the candidate winning block must have actually been mined by the authority miner. 
 
+For practicality, the proposed spec relies on a mock `ethash-test` PoW consensus scheme, which basically means that it's super easy to mine new blocks. Although this is far faster and cheaper than running the PoA alongside PoW, the PoA scheme is PoW-implementation agnostic.
 
+Please read through the repo's README and code comments for more implementation details.
 
 ## Notes and limitations
 
-- This is pseudo code.
-- asdf
+- Most of this code is pseudo code.
+
