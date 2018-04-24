@@ -72,6 +72,7 @@ The chain-to-chain "liaison" is the least natively-accessible challenge for pre-
 
 The reason we're "sort of" building these things is because I'm not that interested in developing code barely beyond pseudo-code. That's why they call it _minimum_ viable.
 
+Please see [Appendix #technical requirements](#technical-requirements) for more specifics.
 
 
 ### Getting started
@@ -247,6 +248,8 @@ while [ $rpc_call_attempts -lt 10 ]; do
 done
 ```
 
+In this case, the liaison has until the sidechain's next checkpoint block to confirm that the transaction on mainnet was successful, and then to post a "receipt" transaction of this to sidenet. 
+
 #### Smart contracts
 
 One important facet of this schema that I haven't gone into (yet?) are the smart contracts. Here's what they'll need to do.
@@ -274,3 +277,15 @@ Please read through the repo's README and code comments for more implementation 
 
 - Most of this code is pseudo code.
 
+## Appendix
+
+### Technical requirements
+
+#### Generic consensus
+- Any node `n` must be able to determine the validity of any given block `b`.
+- Every node `n` must validate each block `b` independently.
+- In case of an invalid block `'b`, it must not be added `n`'s canonical chain.
+
+
+#### Liaison
+- 
