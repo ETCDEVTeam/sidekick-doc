@@ -66,7 +66,7 @@ __Checkpoints__. Tying together points `1` and `2`, implementing checkpoints wil
 
 Please note that in some aspects these projects are interdependent. For example, the checkpoint mechanism will be interdependent with the consensus mechanism, since both require and facilitate block validation. And chain-to-chain communication will be dependent on the the timing and logistics of the checkpointing scheme, so those will need to integrate smoothly as well.
 
-The chain-to-chain "liason" is the least natively-accessible challenge for pre-existing clients, and to address it we'll write a tiny third-party "sidecar" application that will live next door to the client.
+The chain-to-chain "liaison" is the least natively-accessible challenge for pre-existing clients, and to address it we'll write a tiny third-party "sidecar" application that will live next door to the client.
 
 The reason we're "sort of" building these things is because I'm not that interested in developing code barely beyond pseudo-code. That's why they call it _minimum_ viable.
 
@@ -104,15 +104,15 @@ One of the most significant limitations of geth's console and it's primary facil
 
 Web3 aside, current clients are designed to initialize their configuration and behavior around a single `network_id` value to differentiate and identify nodes participating in a matching chain. Support for a range of chains is on the horizon, but not yet actualized, meaning that client p2p protocols can't be readily used to communicate between chains.
 
-So for the time being we're going to use a simple external script `liason.sh` to handle the inter-chain communication responsibility.
+So for the time being we're going to use a simple external script `liaison.sh` to handle the inter-chain communication responsibility.
 
-The `liason.sh` program has three primary event-based behaviors to implement:
+The `liaison.sh` program has three primary event-based behaviors to implement:
 
 1. On a sidenet checkpoint-creation event, POST data delegated from a sidechain node to a mainnet endpoint. For this example, this will mean __POSTing a transaction__ containing a fingerprint hash of a sidechain block(s) or state to a contract address on the mainnet.
 2. IFF the _success_ of `1`, POST a transaction to a corresponding smart contract on the sidechain providing validation of the successful integration.
 3. IFF the _failure_ of `1`, do not provide the validation. This could be accomplished either with a transaction to the sidechain providing a negative status and associated error data around the failure of `2`, or, more simply, by the notable absence of the proof-positive expected from `2`.
 
-__NOTE__ that the `liason.sh` application bears _a lot_ of responsibility. It's a lynch-pin, and we're going to have as much trust in the functionality of this program and its environment as we do in the reliability of the client.
+__NOTE__ that the `liaison.sh` application bears _a lot_ of responsibility. It's a lynch-pin, and we're going to have as much trust in the functionality of this program and its environment as we do in the reliability of the client.
 
 
 ### The code
@@ -123,41 +123,93 @@ I've put together a few repositories on Github that hold pseudo/code that are im
 
 - [github.com/ETCDEVTeam/sidekick-tx2poa](http://github.com/ETCDEVTeam/sidekick-tx2poa). A PoA mechanism implemented through an emphemeral JS console.
 
-- [github.com/ETCDEVTeam/sidekick-liason](http://github.com/ETCDEVTeam/sidekick-liason). A bash script that listens to a sidechain node and facilitates communication with an arbitrary mainnet node. As written, relies on [emerald-cli](https://github.com/ETCDEVTeam/emerald-cli).
+- [github.com/ETCDEVTeam/sidekick-liaison](http://github.com/ETCDEVTeam/sidekick-liaison). A bash script that listens to a sidechain node and facilitates communication with an arbitrary mainnet node. As written, relies on [emerald-cli](https://github.com/ETCDEVTeam/emerald-cli).
 
-- [github.com/ETCDEVTeam/sidekick-checkpointer](http://github.com/ETCDEVTeam/sidekick-checkpointer). A checkpointing mechanism implemented through an ephemerald JS console.
+- [github.com/ETCDEVTeam/sidekick-checkpointer](http://github.com/ETCDEVTeam/sidekick-checkpointer). A checkpointing mechanism implemented through an ephemeral JS console.
 
 - [ ] Examples of mainnet and sidenet smart contracts to manage inter-chain state verification.
 
+Since each of these repositories have their own associated documentation (as far as READMEs and fairly extensive code comments), I'm going here only to touch on some demonstrative highlights.
+
+#### Checkpointing and liaison-ing
+
+Let's start with the checkpointing and liaison mechanisms.
+
+In practice using the two together will look something like this:
+
+`$ geth --chain sidenet --js-path="sidekick" js `[checkpointer.js](https://github.com/ETCDEVTeam/sidekick-checkpointer/blob/master/checkpoint.js)` | `[liaison.sh](http://github.com/ETCDEVTeam/sidekick-liaison/blob/master/liaison.sh)
+
+Here we're using geth's emphemeral JS console to run the `checkpoint.js` script, and then pipe `stdout` along to our liaison script. Since the pipe is only forwarding `stdout` we're still able to view and redirect geth's normal `stderr` logs.
+
+`checkpoint.js` relies on two constants: an interval integer at which to process checkpoints, and a smart contract to query for arbitrary verification data.
+
+In this example, upon confirming the security of the most recent past checkpoint, a new checkpoint is allowed to be posited for archiving on the mainnet. If the confirmation of the past checkpoint fails, however, the client is instructed to roll the chain back to the last known valid checkpoint, which is the "grandparent" of the current checkpoint candidate.
+
+```js
+function assertCheckpoint(blockNumber) {
+  var block = eth.getBlock(blockNum);
+
+  // var json = {"block": blockNum, "hash": block.hash};
+  // var jsonstring = JSON.stringify(json);
+
+  // for demo purposes just write block hash to console log, which goes to stdout.
+  // this can then be captured by the "sidecar" liaison application
+  console.log(block.hash);
+}
+
+// checkpointHandler abstract handling checkpoint event management.
+// it accepts functions for checkpoint success and failure callbacks, each which are passed
+// the current checkpoint blocknumber.
+function checkpointHandler(onSuccess, onFail) {
+  var blockNum = eth.blockNumber;
+  var distanceFromCheckpoint = blockNum % checkpointInterval;
+
+  // if the chain has arrived at a checkpoint block
+  if (blockNum !== 0 && distanceFromCheckpoint === 0) {
+
+      // if contract fails (data from mainnet was invalid), purge blocks between current block (which would have been newest checkpoint) and last checkpoint
+      if (!validateCheckpoint(blockNum)) {
+
+        // fire failure callback
+        if (onFail !== null) {
+          onFail(blockNum);
+        }
+
+      // else our contract was updated and valid, verifying that our last checkpoint was successfully recorded on the mainnet
+      } else {
+
+          // fire success callback
+          if (onSuccess !== null) {
+            onSuccess(blockNum);
+          }
+
+          // now we can wait the precise amount of blocks until the next scheduled checkpoint
+          admin.sleepBlocks(checkpointInterval);
+      }
+  } else {
+      // otherwise the chain head is not at a checkpoint... wait until next checkpoint.
+      // this will only be called once immediately after client start up
+      admin.sleepBlocks(distanceFromCheckpoint);
+  }
+  checkpointHandler();
+}
+
+checkpointHandler(assertCheckpoint, function onError(blockNumber) {
+  debug.setHead(blockNumber - 2*checkpointInterval);
+});
+```
+
+Via the tiny `console.log` statement we're able to send arbitrary data directly to a waiting `liaison.sh`
+script.
+
+`liaison.sh`, using a simple `while read` loop, can then be "notified" of arbitrarily complex events coming from geth's latest checkpoint. As written, the code only handles an incoming block hash for simplicity of demonstration.
+
+Using `curl` and an assumed [emerald-cli](https://github.com/ETCDEVTeam/emerald-cli), the script is then able to facilitate posting transactions to designated smart contract address on both the mainnet and subsequently the sidechain.
 
 
 
 
+## Notes and limitations
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-----
+- This is pseudo code.
+- asdf
