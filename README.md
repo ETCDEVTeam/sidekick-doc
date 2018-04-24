@@ -4,10 +4,10 @@
 
 #### What even is a sidechain?
 
-There are two critical pieces: 
+There are two critical pieces:
 
 1. A sidechain is a blockchain network that works very similarly to `mainnet`... _but isn't_. For whatever reason the sidechain is an insulated network that probably uses the same or similar technology as the mainnet. It could, for example, be run by a company or companies who want to distribute a consensus-based ledger/application framework, but don't want to be beholden to the unwashed and agnostic democracy that govern the economics and politics of the `mainnet`.
-2. A sidechain _talks to_ `mainnet`. This is what makes a sidechain a sidechain, instead of a plain old private network. By talking to the mainnet, the sidechain is able to balance the advantages a private network with the security of the mainnet. 
+2. A sidechain _talks to_ `mainnet`. This is what makes a sidechain a sidechain, instead of a plain old private network. By talking to the mainnet, the sidechain is able to balance the advantages a private network with the security of the mainnet.
 
 
 #### So what are the advantages (or disadvantages) of a sidechain?
@@ -26,7 +26,7 @@ Addressing `Con#1` is where the whole networks-talking-to-each-other thing comes
 
 #### Data flows
 
-If the sidenet were _only to POST data_ to the mainnet, and never depend on querying that data again, there would indeed be a secure _record_ of the sidechain history... but there's nothing to ensure that the sidechain history -- the record itself -- would actually have integrity relative to the mainnet. 
+If the sidenet were _only to POST data_ to the mainnet, and never depend on querying that data again, there would indeed be a secure _record_ of the sidechain history... but there's nothing to ensure that the sidechain history -- the record itself -- would actually have integrity relative to the mainnet.
 
 The mainnet's integrity is a function of necessitating sequential congruence; the value of block B depends on the value of block A, and everyone's got to agree (or at least not rebut) that the given pieces do actually fit together. Chain progression and integrity is derived from sequential consensus.
 
@@ -40,7 +40,7 @@ For further reference, let's call a pattern where sidenet does _POST only_ to ma
 #### Why minimum-viable?
 
 - Because I'm kind of slow and want to mess around with the concepts before tangling too much with client/protocol consensus-facing code.
-- Because changes to client code are more complex and have external dependencies. Code must be written, refactored, rewritten, reviewed, heckled, rebased, merged, tagged, and released. Documentation needs to be documented, clients updated, tests tested, bugs fixed... and so forth. Eventually the best solution(s) _will_ involve significant and diverse changes to the client(s), but for now we're still in the "what does this even mean" phase, and a minimum-viable proof-of-concept should approach being runnable by anybody _now_... if possible. 
+- Because changes to client code are more complex and have external dependencies. Code must be written, refactored, rewritten, reviewed, heckled, rebased, merged, tagged, and released. Documentation needs to be documented, clients updated, tests tested, bugs fixed... and so forth. Eventually the best solution(s) _will_ involve significant and diverse changes to the client(s), but for now we're still in the "what does this even mean" phase, and a minimum-viable proof-of-concept should approach being runnable by anybody _now_... if possible.
 - And finally, because it's fun to see how we could bend already-existing stuff to make it do new weird stuff.
 
 #### Conceptual requirements
@@ -51,14 +51,14 @@ __Consensus__. It's likely that on the side network it won't be desirable to use
 
 __Chain-to-chain communication__. For sidechains, this will mean establishing the mechanism that is able to inform block validation relative to the state of the mainnet. As a client/protocol implementation this will likely mean changes or additions to RLPx protocol, p2p patterns, and the refactoring of clients towards simultaneous multi-chain support. Our implementation will outsource this responsibility to a "sidecar" application.
 
-__Checkpoints__. Tying together points `1` and `2`, implementing checkpoints will be in large part a function of how we decide to roll consensus and communication between chains. The interesting part will be building the logistics a system that can be used to efficiently "fingerprint" a state of affairs on the sidenet, store that data in the mainnet, and then use a query from mainnet for that data to validate the integrity of the sidenet later on. There will be hashes. 
+__Checkpoints__. Tying together points `1` and `2`, implementing checkpoints will be in large part a function of how we decide to roll consensus and communication between chains. The interesting part will be building the logistics a system that can be used to efficiently "fingerprint" a state of affairs on the sidenet, store that data in the mainnet, and then use a query from mainnet for that data to validate the integrity of the sidenet later on. There will be hashes.
 
 > Aside: IMO it's really dumb that they're called smart contracts. They're not smart and they're not really contracts. They're just programs.
 
 #### Things we'll (sort of) build
 
-1. A Proof of Authority mechanism to solve the `Consensus` requirement. 
-2. A mechanism to enable chain-to-chain communication. 
+1. A Proof of Authority mechanism to solve the `Consensus` requirement.
+2. A mechanism to enable chain-to-chain communication.
 3. A mechanism to create and validate checkpoints on the sidechain.
 4. Smart contracts for mainnet and sidenet to store and delegate checkpoint fingerprints and fingerprint validation.
 
@@ -81,21 +81,20 @@ As a primary tool for messing with the [go-ethereum client (aka Geth)](https://g
 
 Geth has three subcommands built around the JS console: `console`, `attach`, and `js`.
 
-1. `$ geth console` starts geth and begins an _interactive_ JS console session. 
+1. `$ geth console` starts geth and begins an _interactive_ JS console session.
 2. `$ geth attach` connects to an _already-running_ geth client and then begins an interactive session.
 3. `$ geth js program.js` begins an _ephemeral_ JS session, running a given `program.js` _without interactivity_.
 
-One of the nuances of geth, and a good friend of ours on this journey, is that __geth sends all normal logs to `stderr`__, but __JS console output goes to `stdout`__. This difference of data stream contexts will play a tiny but important role for us.
+
+Geth's display and debug logs use stderr exclusively, while console.log from geth's JS Console goes to stdout. This allows to use geth's attach, console, or ephemeral js subcommands as dedicated data stream writers.
 
 There's a lot of options and different ways to use these three subcommands, but, while tempting, a deep dive in that direction is out of scope here. I hope the brief associated commentary in the following examples are sufficient for the purpose at hand.
 
 I'll use the console to run arbitrary javascript scripts that implement adhoc PoA and checkpoint features.
 
-> TODO: Add example session.
 
 > TODO: Add link to docs.
 
-> TODO: Touch on _how_ the JS console command connects and relates to a geth instance materially, eg what even is IPC and why does it matter.
 
 #### A ~~hacky bash script~~ "sidecar" application
 
@@ -105,7 +104,7 @@ One of the most significant limitations of geth's console and it's primary facil
 
 Web3 aside, current clients are designed to initialize their configuration and behavior around a single `network_id` value to differentiate and identify nodes participating in a matching chain. Support for a range of chains is on the horizon, but not yet actualized, meaning that client p2p protocols can't be readily used to communicate between chains.
 
-So for the time being we're going to use a simple external script `liason.sh` to handle the inter-chain communication responsibility. 
+So for the time being we're going to use a simple external script `liason.sh` to handle the inter-chain communication responsibility.
 
 The `liason.sh` program has three primary event-based behaviors to implement:
 
@@ -126,7 +125,7 @@ I've put together a few repositories on Github that hold pseudo/code that are im
 
 - [github.com/ETCDEVTeam/sidekick-liason](http://github.com/ETCDEVTeam/sidekick-liason). A bash script that listens to a sidechain node and facilitates communication with an arbitrary mainnet node. As written, relies on [emerald-cli](https://github.com/ETCDEVTeam/emerald-cli).
 
-- [github.com/ETCDEVTeam/sidekick-checkpointer](http://github.com/ETCDEVTeam/checkpointer). A checkpointing mechanism implemented through an ephemerald JS console. 
+- [github.com/ETCDEVTeam/sidekick-checkpointer](http://github.com/ETCDEVTeam/sidekick-checkpointer). A checkpointing mechanism implemented through an ephemerald JS console.
 
 - [ ] Examples of mainnet and sidenet smart contracts to manage inter-chain state verification.
 
@@ -162,5 +161,3 @@ I've put together a few repositories on Github that hold pseudo/code that are im
 
 
 ----
-
-
