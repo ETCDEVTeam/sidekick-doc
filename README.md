@@ -37,6 +37,8 @@ For further reference, let's call a pattern where sidenet does _POST only_ to ma
 
 ## Building a ~~dumbest possible~~ minimum-viable sidechain
 
+![diagram1](./diagram1.jpg)
+
 #### Why minimum-viable?
 
 - Because I'm kind of slow and want to mess around with the concepts before tangling too much with client/protocol consensus-facing code.
@@ -69,6 +71,7 @@ Please note that in some aspects these projects are interdependent. For example,
 The chain-to-chain "liaison" is the least natively-accessible challenge for pre-existing clients, and to address it we'll write a tiny third-party "sidecar" application that will live next door to the client.
 
 The reason we're "sort of" building these things is because I'm not that interested in developing code barely beyond pseudo-code. That's why they call it _minimum_ viable.
+
 
 
 ### Getting started
@@ -202,9 +205,50 @@ checkpointHandler(assertCheckpoint, function onError(blockNumber) {
 Via the tiny `console.log` statement we're able to send arbitrary data directly to a waiting `liaison.sh`
 script.
 
-`liaison.sh`, using a simple `while read` loop, can then be "notified" of arbitrarily complex events coming from geth's latest checkpoint. As written, the code only handles an incoming block hash for simplicity of demonstration.
+`liaison.sh`, using a simple `while read` loop, can then be "notified" of arbitrarily complex events coming from geth's latest checkpoint and act accordingly. As written, the code only handles an incoming block hash for simplicity of demonstration, for example:
 
-Using `curl` and an assumed [emerald-cli](https://github.com/ETCDEVTeam/emerald-cli), the script is then able to facilitate posting transactions to designated smart contract address on both the mainnet and subsequently the sidechain.
+```shell
+while read -r line; do
+	echo "Sidecar application received notification of checkpoint event. Data: $line"
+	sidenet_checkpoint_block_hash="$line" # just for example. obviously could be a lot more sophisticated
+	# 1. Send an upstream transaction to store data on mainnet.
+	#
+	EMERALD_GAS_COST=21 \
+	txHash=$(emerald transaction send \
+		# our sidekick's account
+	    0x0e7c045110b8dbf29765047380898919c5cb56f4 \
+	    # our mainnet contract address
+	    "$upstream_contract_address" \
+	    0x1 \
+	    --data="$sidenet_checkpoint_block_hash"
+	    --gas=0x2100 \
+	    --upstream="$upstream" \
+	    < echo "secret passphrase")
+
+```
+
+Using `curl` and an assumed [emerald-cli](https://github.com/ETCDEVTeam/emerald-cli), the script facilitates posting transactions to designated smart contract address on both the mainnet and reciprocally to the sidechain.
+
+The important thing -- and as-is, kind of awkwardly written -- is that the script not only acts on an event coming from the sidenet client, but also that it's able to listen or monitor for a corresponding "status update" from mainnet. This is implemented here, albeit awkwardly, as
+
+```shell
+while [ $rpc_call_attempts -lt 10 ]; do
+  res=$(curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["'$txHash'"],"id":1}' "$upstream")
+  # If Tx has or has not been incuded in a block.
+  # Include other validation here, like does the result of eth_call(tx.code) == expected? eg. check that not only was tx included, but data is also properly stored in contract.
+  # Again, this is pseudo code.
+  if [[ $(echo "$res" | /usr/bin/local/json result.blockHash) =~ "0x0000"* ]]; then
+    rpc_call_attempts=$(( rpc_call_attempts + 1 ))
+    sleep 10
+  else
+    sidekick_exitcode=0
+    break; # break while loop. we're done here
+  fi
+done
+```
+
+
+#### PoA consensus in adhoc javascript
 
 
 
