@@ -45,17 +45,17 @@ For further reference, let's call a pattern where sidenet does _POST only_ to ma
 
 #### Conceptual requirements
 
-There are a few key challenges in developing a sidechain-ready client.
+There are a few key challenges in developing a sidechain-ready scenario.
 
 __Consensus__. It's likely that on the side network it won't be desirable to use Proof of Work (at least for the immediate use-cases -- it doesn't take too far of a visionary leap to imagine a range of reasons and contexts accomodating the gamut of consensus patterns). First use-cases are insulated, federated, and are eager to gain the benefits that come without reverence to fully distributed consensus. A likely and probably first-use case is Proof of Authority, so we'll tend that direction in this experiment.
 
-__Chain-to-chain communication__. For sidechains, this will mean establishing the mechanism that is able to inform block validation relative to the state of the mainnet. As a client/protocol implementation this will likely mean changes or additions to RLPx protocol, p2p patterns, and the refactoring of clients towards simultaneous multi-chain support.
+__Chain-to-chain communication__. For sidechains, this will mean establishing the mechanism that is able to inform block validation relative to the state of the mainnet. As a client/protocol implementation this will likely mean changes or additions to RLPx protocol, p2p patterns, and the refactoring of clients towards simultaneous multi-chain support. Our implementation will outsource this responsibility to a "sidecar" application.
 
-__Checkpoints__. Tying together points `1` and `2`, implementing checkpoints will be in large part a function of how we decide to roll consensus and communication between chains. The interesting part will be building the logistics a system that can be used to efficiently "fingerprint" a state of affairs on the sidenet, store that data in the mainnet, and then use a query from mainnet of that data to validate the integrity of the sidenet later on. There will be hashes. There will be signatures. And, since we're ETC, there will probably be a smart contract or two.
+__Checkpoints__. Tying together points `1` and `2`, implementing checkpoints will be in large part a function of how we decide to roll consensus and communication between chains. The interesting part will be building the logistics a system that can be used to efficiently "fingerprint" a state of affairs on the sidenet, store that data in the mainnet, and then use a query from mainnet for that data to validate the integrity of the sidenet later on. There will be hashes. 
 
 > Aside: IMO it's really dumb that they're called smart contracts. They're not smart and they're not really contracts. They're just programs.
 
-#### Things we'll build
+#### Things we'll (sort of) build
 
 1. A Proof of Authority mechanism to solve the `Consensus` requirement. 
 2. A mechanism to enable chain-to-chain communication. 
@@ -67,6 +67,9 @@ __Checkpoints__. Tying together points `1` and `2`, implementing checkpoints wil
 Please note that in some aspects these projects are interdependent. For example, the checkpoint mechanism will be interdependent with the consensus mechanism, since both require and facilitate block validation. And chain-to-chain communication will be dependent on the the timing and logistics of the checkpointing scheme, so those will need to integrate smoothly as well.
 
 The chain-to-chain "liason" is the least natively-accessible challenge for pre-existing clients, and to address it we'll write a tiny third-party "sidecar" application that will live next door to the client.
+
+The reason we're "sort of" building these things is because I'm not that interested in developing code barely beyond pseudo-code. That's why they call it _minimum_ viable.
+
 
 ### Getting started
 
@@ -86,6 +89,8 @@ One of the nuances of geth, and a good friend of ours on this journey, is that _
 
 There's a lot of options and different ways to use these three subcommands, but, while tempting, a deep dive in that direction is out of scope here. I hope the brief associated commentary in the following examples are sufficient for the purpose at hand.
 
+I'll use the console to run arbitrary javascript scripts that implement adhoc PoA and checkpoint features.
+
 > TODO: Add example session.
 
 > TODO: Add link to docs.
@@ -100,15 +105,62 @@ One of the most significant limitations of geth's console and it's primary facil
 
 Web3 aside, current clients are designed to initialize their configuration and behavior around a single `network_id` value to differentiate and identify nodes participating in a matching chain. Support for a range of chains is on the horizon, but not yet actualized, meaning that client p2p protocols can't be readily used to communicate between chains.
 
-So for the time being we're going to use a simple external application `liason` to handle the inter-chain communication responsibility. 
+So for the time being we're going to use a simple external script `liason.sh` to handle the inter-chain communication responsibility. 
 
-The `liason` program has three primary event-based behaviors to implement:
+The `liason.sh` program has three primary event-based behaviors to implement:
 
-1. On a sidenet checkpoint-creation event, POST data delegated from a sidechain node to a mainnet endpoint. For this example, this will mean __POSTing a transaction__ containing a fingerprint hash of a sidechain block or state to a contract address on the mainnet.
+1. On a sidenet checkpoint-creation event, POST data delegated from a sidechain node to a mainnet endpoint. For this example, this will mean __POSTing a transaction__ containing a fingerprint hash of a sidechain block(s) or state to a contract address on the mainnet.
 2. IFF the _success_ of `1`, POST a transaction to a corresponding smart contract on the sidechain providing validation of the successful integration.
 3. IFF the _failure_ of `1`, do not provide the validation. This could be accomplished either with a transaction to the sidechain providing a negative status and associated error data around the failure of `2`, or, more simply, by the notable absence of the proof-positive expected from `2`.
 
-__NOTE__ that the `liason` application bears _a lot_ of responsibility. It's a lynch-pin, and as engineers we're going to place as much trust in the functionality of this program as we do in the reliability of the chain client.
+__NOTE__ that the `liason.sh` application bears _a lot_ of responsibility. It's a lynch-pin, and we're going to have as much trust in the functionality of this program and its environment as we do in the reliability of the client.
 
+
+### The code
+
+We're going to go on an adventure.
+
+I've put together a few repositories on Github that hold pseudo/code that are important touchstones for this document. I recommend opening a neighboring tab or two.
+
+- [github.com/ETCDEVTeam/sidekick-tx2poa](http://github.com/ETCDEVTeam/sidekick-tx2poa). A PoA mechanism implemented through an emphemeral JS console.
+
+- [github.com/ETCDEVTeam/sidekick-liason](http://github.com/ETCDEVTeam/sidekick-liason). A bash script that listens to a sidechain node and facilitates communication with an arbitrary mainnet node. As written, relies on [emerald-cli](https://github.com/ETCDEVTeam/emerald-cli).
+
+- [github.com/ETCDEVTeam/sidekick-checkpointer](http://github.com/ETCDEVTeam/checkpointer). A checkpointing mechanism implemented through an ephemerald JS console. 
+
+- [ ] Examples of mainnet and sidenet smart contracts to manage inter-chain state verification.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----
 
 
