@@ -102,6 +102,8 @@ I'll use the console to run arbitrary javascript scripts that implement adhoc Po
 
 #### A ~~hacky bash script~~ "sidecar" application
 
+![hackish-sidecar](./hackish-sidecar.jpg)
+
 One of the most significant limitations of geth's console and it's primary facilitator `web3.js` is the notable absense of web-based calls. The libraries don't include standard web protocol tools akin to `AJAX` or `curl`. This is because the web is a murky, untrustworthy place, filled with fake news and flip facebook friends, and the thought is that it's kind of antithetical to the design intentions for the fundamentals of a blockchain.
 
 > There are a few approaches to solutions around this limitation, like "oracles" and even a few distributed protocols that hope to integrate the two worlds in a trustable/trustless way, and in the future might be an interesting avenue of further exploration as far as chain integrations initiated from within the content of the blockchain.
