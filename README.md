@@ -37,7 +37,7 @@ For further reference, let's call a pattern where sidenet does _POST only_ to ma
 
 ## Building a ~~dumbest possible~~ minimum-viable sidechain
 
-![diagram1](./diagram1.jpg)
+![diagram1](./diagram1.png)
 
 #### Why minimum-viable?
 
