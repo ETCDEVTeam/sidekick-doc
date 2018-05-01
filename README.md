@@ -213,8 +213,8 @@ checkpointHandler(assertCheckpoint, function onError(blockNumber) {
 });
 ```
 
-Via the tiny `console.log` statement we're able to send arbitrary data directly to a waiting `liaison.sh`
-script.
+__Via the tiny `console.log` statement we're able to send arbitrary data directly to a waiting `liaison.sh`
+script.__
 
 `liaison.sh`, using a simple `while read` loop, can then be "notified" of arbitrarily complex events coming from geth's latest checkpoint and act accordingly. As written, the code only handles an incoming block hash for simplicity of demonstration, for example:
 
@@ -240,7 +240,7 @@ while read -r line; do
 
 Using `curl` and an assumed [emerald-cli](https://github.com/ETCDEVTeam/emerald-cli), the script facilitates posting transactions to designated smart contract address on both the mainnet and reciprocally to the sidechain.
 
-The important thing is that the script not only acts on an event coming from the sidenet client, but also that it's able to listen or monitor for a corresponding "status update" from mainnet. This is implemented here, albeit awkwardly, as
+The important thing is that __the script not only acts on an event coming from the sidenet client, but also that it's able to listen or monitor for a corresponding "status update" from mainnet__. This is implemented here, albeit awkwardly, as
 
 ```shell
 while [ $rpc_call_attempts -lt 10 ]; do
