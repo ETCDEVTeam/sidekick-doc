@@ -126,6 +126,7 @@ We're going to go on an adventure.
 I've put together a few repositories on Github that hold pseudo/code that are important touchstones for this document. I recommend opening a neighboring tab or two.
 
 - [github.com/ETCDEVTeam/sidekick-tx2poa](http://github.com/ETCDEVTeam/sidekick-tx2poa). A PoA mechanism implemented through an emphemeral JS console.
+  + [github.com/ETCDEVTeam/sidekick-poc](github.com/ETCDEVTeam/sidekick-poc). A working proof-of-concept configuration for a private network using Tx2PoA.
 
 - [github.com/ETCDEVTeam/sidekick-liaison](http://github.com/ETCDEVTeam/sidekick-liaison). A bash script that listens to a sidechain node and facilitates communication with an arbitrary mainnet node. As written, relies on [emerald-cli](https://github.com/ETCDEVTeam/emerald-cli).
 
@@ -141,7 +142,9 @@ The core idea of [ETCDEVTeam/tx2poa](https://github.com/ETCDEVTeam/sidekick-tx2p
 
 For practicality, the proposed spec relies on a mock `ethash-test` PoW consensus scheme, which basically means that it's super easy to mine new blocks. Although this is far faster and cheaper than running the PoA alongside the real `ethash` PoW, the PoA scheme is PoW-implementation agnostic.
 
-Please read through the repo's README and code comments for more implementation details.
+There is a working configuration using this script for a PoA private network at [github.com/ETCDEVTeam/sidekick-poc](github.com/ETCDEVTeam/sidekick-poc).
+
+Please read through the repo's README and code comments for more implementation details. 
 
 
 #### Checkpointing and liaison-ing
