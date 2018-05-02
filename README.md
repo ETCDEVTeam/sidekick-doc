@@ -118,6 +118,9 @@ The `liaison.sh` program has three primary event-based behaviors to implement:
 
 __NOTE__ that the `liaison.sh` application bears _a lot_ of responsibility. It's a lynch-pin, and we're going to have as much trust in the functionality of this program and its environment as we do in the reliability of the client.
 
+For further reading on the topic of sidecar applications' roles and use-cases, check out Cody Burns's excellent thoughts on [_Stargate_ chain-to-chain value exchange]( https://medium.com/@DontPanicBurns/the-blockchain-stargate-366a7a72822e).
+> A Stargate is a server side application that listens for incoming transactions on one chain and sends a complimentary transaction on the other chain.
+
 
 ### The code
 
@@ -138,13 +141,13 @@ Since each of these repositories have their own associated documentation (as far
 
 #### PoA consensus in adhoc javascript
 
-The core idea of [ETCDEVTeam/tx2poa](https://github.com/ETCDEVTeam/sidekick-tx2poa) is for designated "Authority" nodes to use "incomplete proof of authority transactions" to assert their _authorship_ of the blocks they mine by broadcasting their participation in the round along with a piece of a signed hash that together with data provided in a candidate winning next block can be used by any node to verify that the candidate winning block must have actually been mined by the authority miner. 
+The core idea of [ETCDEVTeam/tx2poa](https://github.com/ETCDEVTeam/sidekick-tx2poa) is for designated "Authority" nodes to use "incomplete proof of authority transactions" to assert their _authorship_ of the blocks they mine by broadcasting their participation in the round along with a piece of a signed hash that together with data provided in a candidate winning next block can be used by any node to verify that the candidate winning block must have actually been mined by the authority miner.
 
 For practicality, the proposed spec relies on a mock `ethash-test` PoW consensus scheme, which basically means that it's super easy to mine new blocks. Although this is far faster and cheaper than running the PoA alongside the real `ethash` PoW, the PoA scheme is PoW-implementation agnostic.
 
 There is a working configuration using this script for a PoA private network at [github.com/ETCDEVTeam/sidekick-poc](github.com/ETCDEVTeam/sidekick-poc).
 
-Please read through the repo's README and code comments for more implementation details. 
+Please read through the repo's README and code comments for more implementation details.
 
 
 #### Checkpointing and liaison-ing
@@ -258,7 +261,7 @@ while [ $rpc_call_attempts -lt 10 ]; do
 done
 ```
 
-In this case, the liaison has until the sidechain's next checkpoint block to confirm that the transaction on mainnet was successful, and then to post a "receipt" transaction of this to sidenet. 
+In this case, the liaison has until the sidechain's next checkpoint block to confirm that the transaction on mainnet was successful, and then to post a "receipt" transaction of this to sidenet.
 
 #### Smart contracts
 
