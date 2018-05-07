@@ -196,7 +196,7 @@ done
 
 ### problem/discussions
 
-1.  __Reading a response from a file is clumsy.__ Yea, kind of. At least a working `require` would be nice, as mentioned above. Alternatively, it might not be too much trouble to implement an API method which would listen for arbitrary JSON-response calls via IPC/RPC and be able to delegate them then as "JSON responses" for handling. And on the upside of file-based reads, you first-class persist your stateful data and kind of follow what [Rob Pike might agree follows in a central realization of the Plan 9 OS: "\[...\] since the most important resources of the network are files, the model of that view is file-oriented."](https://9p.io/sys/doc/9.html)
+1.  __Reading a response from a file is clumsy.__ Yea, kind of. At least a working `require` would be nice, as mentioned above. Alternatively, it might not be too much trouble to implement an API method which would listen for arbitrary JSON-response calls via IPC/RPC and be able to delegate them then as "JSON responses" for handling. And on the upside of file-based reads, you first-class persist your stateful data and can use the wide field of file-descriptor-based tools for their management beyond the network client.
 2. __`debug_setHead`__ still looms as an inadequate way of marking a given block as "invalid" (but this has nothing to with inter-chain communication specifically).
 3. It's still __kind of a sidecar__. Yea... but
     - It's pretty portable (windows excluded, of course)
