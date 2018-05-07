@@ -11,7 +11,7 @@ I had outlined a couple of critical elements for a sidechain:
 3. ~~Checkpoints~~ This, in my mind, no longer qualifies as a requirement since _arbitrary_ data can be posted to or queried from mainnet. A sidechain use-case doesn't _have to_ use checkpoints specifically to be a sidechain.
 
 Adhoc __custom consensus__ has been proven with [Tx2PoA](https://github.com/ETCDEVTeam/sidekick-tx2poa). While imperfect, it's a working proof-of-concept. It could, for example, be improved:
-- add "electable" authority candidacy/sealer-eligibility procedure (which would imitate the "ducks-in-a-row" pattern used, for example, on Ropsten at least). This would reduce the number of required "incomplete authority proof" transactions to one per block.
+- add "electable" authority candidacy/sealer-eligibility procedure (which would imitate the "ducks-in-a-row" pattern used, for example, on Ropsten at least). This would reduce the number of required "incomplete authority proofs" transactions to one per block.
 - work more effectively around the limitation of `debug_setHead` as a sole way of purging invalid blocks, which _might_ mean augmenting or otherwise improving the client API around block validation
 - add additional consensus-transaction metadata to communicate network node states, block states, checkpoint blocks and verifications, and improved misbehaving peer/attacker responses
 - refactoring, make it available on Docker, ...
