@@ -37,7 +37,7 @@ For further reference, let's call a pattern where sidenet does _POST only_ to ma
 
 ## Building a ~~dumbest possible~~ minimum-viable sidechain
 
-![diagram1](./diagram1.jpg)
+![diagram1](./diagram1.png)
 
 #### Why minimum-viable?
 
@@ -81,8 +81,6 @@ Please see [Appendix #technical requirements](#technical-requirements) for more 
 
 As a primary tool for messing with the [go-ethereum client (aka Geth)](https://github.com/ethereumproject/go-ethereum)'s consensus mechanism and checkpointing, I'm going to use the built-in Javascript Console tools. These tools are closely related with the JSON-RPC API, and allow interactive and/or programmatic interfacing with a running client via WS, RPC, or IPC.
 
-> TODO: Is that right? RPC, really?
-
 Geth has three subcommands built around the JS console: `console`, `attach`, and `js`.
 
 1. `$ geth console` starts geth and begins an _interactive_ JS console session.
@@ -97,7 +95,7 @@ There's a lot of options and different ways to use these three subcommands, but,
 I'll use the console to run arbitrary javascript scripts that implement adhoc PoA and checkpoint features.
 
 
-> TODO: Add link to docs.
+> https://github.com/ethereumproject/go-ethereum/wiki/JavaScript-Console
 
 
 #### A ~~hacky bash script~~ "sidecar" application
@@ -120,6 +118,9 @@ The `liaison.sh` program has three primary event-based behaviors to implement:
 
 __NOTE__ that the `liaison.sh` application bears _a lot_ of responsibility. It's a lynch-pin, and we're going to have as much trust in the functionality of this program and its environment as we do in the reliability of the client.
 
+For further reading on the topic of sidecar applications' roles and use-cases, check out Cody Burns's excellent thoughts on [_Stargate_ chain-to-chain value exchange]( https://medium.com/@DontPanicBurns/the-blockchain-stargate-366a7a72822e).
+> A Stargate is a server side application that listens for incoming transactions on one chain and sends a complimentary transaction on the other chain.
+
 
 ### The code
 
@@ -128,6 +129,7 @@ We're going to go on an adventure.
 I've put together a few repositories on Github that hold pseudo/code that are important touchstones for this document. I recommend opening a neighboring tab or two.
 
 - [github.com/ETCDEVTeam/sidekick-tx2poa](http://github.com/ETCDEVTeam/sidekick-tx2poa). A PoA mechanism implemented through an emphemeral JS console.
+  + [github.com/ETCDEVTeam/sidekick-poc](github.com/ETCDEVTeam/sidekick-poc). A working proof-of-concept configuration for a private network using Tx2PoA.
 
 - [github.com/ETCDEVTeam/sidekick-liaison](http://github.com/ETCDEVTeam/sidekick-liaison). A bash script that listens to a sidechain node and facilitates communication with an arbitrary mainnet node. As written, relies on [emerald-cli](https://github.com/ETCDEVTeam/emerald-cli).
 
@@ -137,11 +139,20 @@ I've put together a few repositories on Github that hold pseudo/code that are im
 
 Since each of these repositories have their own associated documentation (as far as READMEs and fairly extensive code comments), I'm going here only to touch on some demonstrative highlights.
 
+#### PoA consensus in adhoc javascript
+
+The core idea of [ETCDEVTeam/tx2poa](https://github.com/ETCDEVTeam/sidekick-tx2poa) is for designated "Authority" nodes to use "incomplete proof of authority transactions" to assert their _authorship_ of the blocks they mine by broadcasting their participation in the round along with a piece of a signed hash that together with data provided in a candidate winning next block can be used by any node to verify that the candidate winning block must have actually been mined by the authority miner.
+
+For practicality, the proposed spec relies on a mock `ethash-test` PoW consensus scheme, which basically means that it's super easy to mine new blocks. Although this is far faster and cheaper than running the PoA alongside the real `ethash` PoW, the PoA scheme is PoW-implementation agnostic.
+
+There is a working configuration using this script for a PoA private network at [github.com/ETCDEVTeam/sidekick-poc](github.com/ETCDEVTeam/sidekick-poc).
+
+Please read through the repo's README and code comments for more implementation details.
+
+
 #### Checkpointing and liaison-ing
 
-Let's start with the checkpointing and liaison mechanisms.
-
-In practice using the two together will look something like this:
+In practice using the checkpointing and liaison mechanisms together might look something like this:
 
 `$ geth --chain sidenet --js-path="sidekick" js `[checkpointer.js](https://github.com/ETCDEVTeam/sidekick-checkpointer/blob/master/checkpoint.js)` | `[liaison.sh](http://github.com/ETCDEVTeam/sidekick-liaison/blob/master/liaison.sh)
 
@@ -205,8 +216,8 @@ checkpointHandler(assertCheckpoint, function onError(blockNumber) {
 });
 ```
 
-Via the tiny `console.log` statement we're able to send arbitrary data directly to a waiting `liaison.sh`
-script.
+__Via the tiny `console.log` statement we're able to send arbitrary data directly to a waiting `liaison.sh`
+script.__
 
 `liaison.sh`, using a simple `while read` loop, can then be "notified" of arbitrarily complex events coming from geth's latest checkpoint and act accordingly. As written, the code only handles an incoming block hash for simplicity of demonstration, for example:
 
@@ -232,7 +243,7 @@ while read -r line; do
 
 Using `curl` and an assumed [emerald-cli](https://github.com/ETCDEVTeam/emerald-cli), the script facilitates posting transactions to designated smart contract address on both the mainnet and reciprocally to the sidechain.
 
-The important thing is that the script not only acts on an event coming from the sidenet client, but also that it's able to listen or monitor for a corresponding "status update" from mainnet. This is implemented here, albeit awkwardly, as
+The important thing is that __the script not only acts on an event coming from the sidenet client, but also that it's able to listen or monitor for a corresponding "status update" from mainnet__. This is implemented here, albeit awkwardly, as
 
 ```shell
 while [ $rpc_call_attempts -lt 10 ]; do
@@ -250,7 +261,7 @@ while [ $rpc_call_attempts -lt 10 ]; do
 done
 ```
 
-In this case, the liaison has until the sidechain's next checkpoint block to confirm that the transaction on mainnet was successful, and then to post a "receipt" transaction of this to sidenet. 
+In this case, the liaison has until the sidechain's next checkpoint block to confirm that the transaction on mainnet was successful, and then to post a "receipt" transaction of this to sidenet.
 
 #### Smart contracts
 
@@ -259,35 +270,28 @@ One important facet of this schema that I haven't gone into (yet?) are the smart
 On mainnet:
 
 - Accept data `d` from a transaction created only by a whitelisted address.
-- Store data `d` and return, say, `sha3(d1,d2)`. We want the return value to be confirmable (reproducible) outside of the contract.
-- Probably limit the amount is `d`s that can be stored.
+- Store data `d` and return, say, `sha3(d1,d2)`. We want the return value to be confirmable (reproducible) outside of the contract, and for the return value to be useful for establishing verified current and past checkpoints.
+- Limit the amount is `d`s that can be stored.
 
 On sidenet:
 
 - Pretty much the same as on mainnet.
 
-
-#### PoA consensus in adhoc javascript
-
-The core idea of [ETCDEVTeam/tx2poa](https://github.com/ETCDEVTeam/sidekick-tx2poa) is for designated "Authority" nodes to use "incomplete proof of authority transactions" to assert their _authorship_ of the blocks they mine by broadcasting their participation in the round along with a piece of a signed hash that together with data provided in a candidate winning next block can be used by any node to verify that the candidate winning block must have actually been mined by the authority miner. 
-
-For practicality, the proposed spec relies on a mock `ethash-test` PoW consensus scheme, which basically means that it's super easy to mine new blocks. Although this is far faster and cheaper than running the PoA alongside PoW, the PoA scheme is PoW-implementation agnostic.
-
-Please read through the repo's README and code comments for more implementation details.
-
 ## Notes and limitations
 
-- Most of this code is pseudo code.
+- Most of this code is pseudo code at this point.
 
 ## Appendix
 
 ### Technical requirements
 
-#### Generic consensus
+#### Generic consensus mechanism
 - Any node `n` must be able to determine the validity of any given block `b`.
 - Every node `n` must validate each block `b` independently.
-- In case of an invalid block `'b`, it must not be added `n`'s canonical chain.
+- In case of an invalid block `b'`, it must not be added `n`'s canonical chain.
 
+#### Liaison mechanism
 
-#### Liaison
-- 
+#### Checkpoint mechanism
+
+#### Smart contract checkpoint storage
