@@ -51,7 +51,7 @@ got a=hello b=there
 got a=undefined b=
 ```
 
-> For a great resource introducing some bash one-liner magic, check out [http://www.catonmat.net/blog/bash-one-liners-explained-part-one/](mat.net/blog/bash-one-liners-explained-part-one/).
+> For a great resource introducing some bash one-liner magic, check out [http://www.catonmat.net/blog/bash-one-liners-explained-part-one/](http://www.catonmat.net/blog/bash-one-liners-explained-part-one).
 
 I started using this pipe pattern with an adjacent "upstream" mainnet client to be the recipient of a "sidestream" sidenet client over IPC.
 
