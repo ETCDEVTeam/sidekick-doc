@@ -163,15 +163,15 @@ __get a little fancy to persist or propagate arbitrary data__
 
 ```js
 // upstreamTx.js
-function send(typeof, target, data, out) {
+function send(domain, target, data, out) {
  // eg args: "rpc", "http://gastracker.io/api", "{'jsonrpc': '2.0' ... }", "/icc/res/got.js"
- console.log(typeof, admin.nodeInfo.id, target, data, out);
+ console.log(domain, admin.nodeInfo.id, target, data, out);
 }
 ```
 
 ```shell
-$ geth --chain sidenet js sendMainnetTx.js | while read -r typeof origin target data respond_here; do
- case $typeof in
+$ geth --chain sidenet js sendMainnetTx.js | while read -r domain origin target data respond_here; do
+ case $domain in
      ipc)
          echo -n "res=" > "$respond_here"
          echo -n "$data" | nc -U "$target" >> "$respond_here"
