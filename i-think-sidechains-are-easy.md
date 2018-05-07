@@ -1,5 +1,5 @@
 # Sidechains are easy.
-## Geth smokes the Bash pipe, or, The second part of an exploration of what MVP sidechains on ETC might look like.
+## The second part of an exploration of what MVP sidechains on ETC might look like.
 
 I wrote an [introduction to thinking about sidechains](https://medium.com/etcdev/exploring-minimum-viable-sidechains-on-etc-3f4b06246aaf) that documented some of my preliminary and exploratory sketches for working with sidechains with _adhoc_ solutions in mind: Can we build sidechains with the tools that we have already? What might they look like, and what can we learn or induce about best next-steps for inter-chain operability?
 
