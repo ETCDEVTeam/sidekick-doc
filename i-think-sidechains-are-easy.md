@@ -65,7 +65,7 @@ console.log(JSON.stringify({"jsonrpc":"2.0","method":"eth_sendRawTransaction","p
 ```
 
 ```shell
-$ geth --chain sidenet js sendMainnetTx.js | while read -r tx; do echo "$tx" |  nc -U <datadir>/mainnet/geth.ipc; done
+$ geth --chain sidenet js sendMainnetTx.js | while read -r tx; do  nc -U <datadir>/mainnet/geth.ipc <<< "$tx"; done
 ```
 
 And now you've got the sidenet node POSTing (any) data to mainnet. But a POST is not enough; we've got to capture the response.
@@ -73,8 +73,7 @@ And now you've got the sidenet node POSTing (any) data to mainnet. But a POST is
 First, we'll make sure we persist the response somewhere:
 
 ```shell
-$ geth --chain sidenet js sendMainnetTx.js | while read -r tx; do
- echo -n "tx" | nc -U <datadir>/mainnet/geth.ipc > /icc/response/data.js;
+$ geth --chain sidenet js sendMainnetTx.js | while read -r tx; do nc -U <datadir>/mainnet/geth.ipc <<< "$tx" > /icc/response/data.js;
 done
 ```
 
@@ -94,7 +93,7 @@ The ugly workaround:
 ```shell
 $ geth --chain sidenet js sendMainnetTx.js | while read -r tx; do
  echo -n "res=" > /icc/response/data.js # assuming js 'var res={};' has already been declared
- echo -n "tx" | nc -U <datadir>/mainnet/geth.ipc >> /icc/response/data.js
+ nc -U <datadir>/mainnet/geth.ipc <<< "$tx" >> /icc/response/data.js
  echo ";" >> /icc/response/data.js
 done
 ```
